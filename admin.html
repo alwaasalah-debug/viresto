@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة التحكم | viresto</title>
+    <link rel="icon" type="image/png" href="images/logo.png">
+    <link rel="stylesheet" href="assets/css/style.css">
+    <style>
+        /* Admin Specific Styles */
+        .login-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .login-box {
+            background: #fff;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: var(--shadow-md);
+            text-align: center;
+            width: 300px;
+        }
+
+        .admin-container {
+            display: none;
+            /* Hidden until login */
+            margin-top: 40px;
+        }
+
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .form-panel {
+            background: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 40px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #d5d5d5;
+            border-radius: 4px;
+            font-family: inherit;
+        }
+
+        .preview-img {
+            max-width: 150px;
+            max-height: 150px;
+            margin-top: 10px;
+            display: none;
+            border: 1px solid #d5d5d5;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #fff;
+            box-shadow: var(--shadow-sm);
+        }
+
+        th,
+        td {
+            padding: 15px;
+            text-align: right;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        th {
+            background-color: #f0f4ff;
+            font-weight: bold;
+        }
+
+        .admin-img-thumb {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Login Screen -->
+    <div id="login-screen" class="login-overlay">
+        <div class="login-box">
+            <img src="images/logo.png" alt="Logo" style="width: 100px; margin: 0 auto 20px auto; display: block;">
+            <h2>تسجيل الدخول</h2>
+            <p class="mb-1">لوحة تحكم الأدمن</p>
+            <input type="email" id="admin-email" class="form-control mb-1" placeholder="البريد الإلكتروني">
+            <input type="password" id="admin-pass" class="form-control mb-1" placeholder="كلمة المرور">
+            <button onclick="checkAdmin()" class="btn" style="width: 100%;">دخول</button>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div id="admin-content" class="admin-container container">
+
+        <div class="admin-header">
+            <h1>لوحة التحكم</h1>
+            <button onclick="logout()" class="btn btn-outline"
+                style="background: white; border: 1px solid red; color: red;">تسجيل خروج</button>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <div style="margin-bottom: 20px; display: flex; gap: 10px;">
+            <button class="btn" id="btn-products" onclick="switchTab('products')">إدارة الساعات</button>
+            <button class="btn btn-outline" id="btn-orders" onclick="switchTab('orders')">الطلبات الواردة</button>
+        </div>
+
+        <!-- PRODUCTS VIEW -->
+        <div id="products-view">
+            <!-- Add Product Form -->
+            <div class="form-panel">
+                <h2>إضافة ساعه جديدة</h2>
+                <form id="add-product-form" onsubmit="handleAddProduct(event)">
+                    <input type="hidden" id="product-id"> <!-- Hidden ID for Editing -->
+
+                    <div class="grid" style="grid-template-columns: 1fr 1fr 1fr; gap: 20px;">
+                        <div class="form-group">
+                            <label>اسم الساعه</label>
+                            <input type="text" id="p-name" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>رابط الساعه (Label)</label>
+                            <input type="text" id="p-label" class="form-control" placeholder="example-shoe"
+                                style="direction: ltr; text-align: right;">
+                        </div>
+                        <div class="form-group">
+                            <label>السعر (بعد الخصم)</label>
+                            <input type="number" id="p-price" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>السعر قبل الخصم (اختياري)</label>
+                            <input type="number" id="p-old-price" class="form-control" placeholder="مثال: 600">
+                        </div>
+                    </div>
+
+                    <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 20px;">
+                        <div class="form-group">
+                            <label>التصنيف</label>
+                            <select id="p-category" class="form-control" required>
+                                <option value="" disabled selected>-- اختر التصنيف --</option>
+                                <option value="MEN">MEN</option>
+                                <option value="WOMEN">WOMEN</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>صور الساعه (يمكن اختيار أكثر من صورة) <span
+                                    style="font-size: 0.8rem; color: #dc3545;">(الحد الأقصى 1 ميجابايت
+                                    للصورة)</span></label>
+                            <input type="file" id="p-images" class="form-control" accept="image/*" multiple
+                                onchange="previewImages(this)">
+                            <div id="images-preview-container"
+                                style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px;"></div>
+                        </div>
+                    </div>
+
+
+
+                    <div class="form-group">
+                        <label>تفاصيل الساعه</label>
+                        <textarea id="p-details" class="form-control" rows="4"
+                            placeholder="اكتب تفاصيل الساعه هنا..."></textarea>
+                    </div>
+
+                    <button type="submit" class="btn">حفظ الساعه</button>
+                    <button type="button" class="btn btn-outline" id="cancel-edit-btn" onclick="resetFormToAddMode()"
+                        style="display: none; margin-right: 10px;">إلغاء التعديل</button>
+                </form>
+            </div>
+
+            <!-- Products List -->
+            <div class="form-panel">
+                <h2>الساعات الحالية</h2>
+                <div style="overflow-x: auto;">
+                    <table id="products-table">
+                        <thead>
+                            <tr>
+                                <th>الصورة</th>
+                                <th>الاسم</th>
+                                <th>السعر</th>
+                                <th>التصنيف</th>
+                                <th>إجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="products-table-body">
+                            <!-- JS Populated -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ORDERS VIEW -->
+        <div id="orders-view" style="display: none;">
+            <div class="form-panel">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h2>الطلبات الواردة</h2>
+                    <button onclick="renderOrdersTable()" class="btn btn-sm" style="background: #2196F3;">تحديث
+                        القائمة</button>
+                </div>
+
+                <div style="overflow-x: auto;">
+                    <table id="orders-table">
+                        <thead>
+                            <tr>
+                                <th>رقم الطلب</th>
+                                <th>التاريخ</th>
+                                <th>العميل</th>
+                                <th>الساعات</th>
+                                <th>الإجمالي</th>
+                                <th>الحالة</th>
+                                <th>إجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="orders-table-body">
+                            <!-- JS Populated -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+    <script src="assets/js/supabase-config.js" defer></script>
+
+    <!-- Scripts -->
+    <script src="assets/js/storage.js" defer></script>
+    <script src="assets/js/main.js" defer></script>
+    <script src="assets/js/admin.js" defer></script>
+</body>
+
+</html>
